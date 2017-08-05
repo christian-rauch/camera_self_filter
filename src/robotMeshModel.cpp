@@ -346,27 +346,23 @@ void RobotMeshModel::initRobot()
 void RobotMeshModel::updateRobotLinks(const ros::Time time_stamp){
 
 	// get the current configuration of the robot links
-	if (current_time_stamp_ != time_stamp){
-		current_time_stamp_ = time_stamp;
-		tf::StampedTransform tf;
-		for (int i=0; i < links_with_meshes.size(); ++i){
+
+	tf::StampedTransform tf;
+	    for (int i=0; i < links_with_meshes.size(); ++i){
 //			if (!tf_.waitForTransform("/"+links_with_meshes[i]->name, modelframe_, current_time_stamp_, ros::Duration(0.5))){
 //				ROS_ERROR("could not get transform from %s to %s", links_with_meshes[i]->name.c_str(),modelframe_.c_str() );
 //				continue;
 //			}
 //			tf_.lookupTransform( modelframe_, links_with_meshes[i]->name, current_time_stamp_, tf);
-            try{
-                tf_.lookupTransform( modelframe_, links_with_meshes[i]->name, time_stamp, tf);
-            }
-            catch (tf::TransformException ex){
-              ROS_ERROR("%s",ex.what());
-              //ros::Duration(1.0).sleep();
-            }
+        try{
+            tf_.lookupTransform( modelframe_, links_with_meshes[i]->name, ros::Time(), tf);
+        }
+        catch (tf::TransformException ex){
+          //ROS_ERROR("%s",ex.what());
+        }
 
-			tf  *= offsets_[links_with_meshes[i]->name];
-			robotLinks_[links_with_meshes[i]->name] = tf;
-
-		}
+		tf  *= offsets_[links_with_meshes[i]->name];
+		robotLinks_[links_with_meshes[i]->name] = tf;
 
 	}
 }
@@ -480,11 +476,18 @@ bool RobotMeshModel::setCameraPose(){
 
 
 	//set camera pose relative to robot links
-	if (!tf_.waitForTransform(modelframe_, cameraframe_, current_time_stamp_, ros::Duration(0.5))){
-			ROS_ERROR("setting cam pose: could not get transform from %s to %s", modelframe_.c_str(),cameraframe_.c_str() );
-			return false;
-	 }
-	tf_.lookupTransform(modelframe_, cameraframe_, current_time_stamp_, cameraPose);
+//	if (!tf_.waitForTransform(modelframe_, "/"+cameraframe_, current_time_stamp_, ros::Duration(0.5))){
+//			ROS_ERROR("setting cam pose: could not get transform from %s to %s", modelframe_.c_str(),cameraframe_.c_str() );
+//			return false;
+//	 }
+   try{
+        tf_.lookupTransform( modelframe_, "/"+cameraframe_, ros::Time(), cameraPose);
+    }
+    catch (tf::TransformException ex){
+      //ROS_ERROR("%s",ex.what());
+      return false;
+    }
+	//tf_.lookupTransform(modelframe_, cameraframe_, current_time_stamp_, cameraPose);
 
 
 	//get offset for stereo

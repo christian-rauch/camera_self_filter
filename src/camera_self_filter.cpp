@@ -132,7 +132,7 @@ void alpha_image_cb(const sensor_msgs::ImageConstPtr& msg_ptr){
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
-      cv_ptr = cv_bridge::toCvCopy(msg_ptr, "passthrough");
+      cv_ptr = cv_bridge::toCvCopy(msg_ptr, "");
     }
     catch (cv_bridge::Exception& e)
     {
@@ -176,11 +176,6 @@ void mask_cb(const sensor_msgs::CameraInfoConstPtr& msg_ptr){
 	calc_and_publish_BWMask(msg_ptr->header.stamp, msg_ptr->header.frame_id);
 }
 
-
-
-
-
-
 int main(int argc, char **argv) {
 	glutInit(&argc, argv);
     ros::init(argc, argv, "robot_self_filter");
@@ -203,8 +198,13 @@ int main(int argc, char **argv) {
     nh_priv.param("inverted",inverted, false);
 
 
-    nh_priv.param<std::string>("camera_topic", camera_topic, "/wide_stereo/right/image_rect_color" );
-    nh_priv.param<std::string>("camera_info_topic", camera_info_topic, "/wide_stereo/right/camera_info" );
+    if(!nh_priv.getParam("camera_topic", camera_topic)) {
+        ROS_ERROR("no param topic");
+    }
+    if(!nh_priv.getParam("camera_info_topic", camera_info_topic)) {
+        ROS_ERROR("no param info");
+    }
+    
 
     ROS_INFO("camera topic %s", camera_topic.c_str());
     ROS_INFO("camera info %s", camera_info_topic.c_str());
@@ -229,9 +229,6 @@ int main(int argc, char **argv) {
     ipl_maskBGRA = cvCreateImage(cvSize( robmod->cam_info_->width, robmod->cam_info_->height), IPL_DEPTH_8U, 4);
     ipl_maskBW = cvCreateImage(cvSize( robmod->cam_info_->width, robmod->cam_info_->height), IPL_DEPTH_8U, 1);
 
-
-
-
     image_transport::ImageTransport it(nh);
 
     if (publish_mask)
@@ -243,8 +240,10 @@ int main(int argc, char **argv) {
     image_transport::Subscriber image_sub;
     ros::Subscriber camerea_info_sub;
     if (publish_alpha_image){
+        std::cout << "it sub" << std::endl;
     	image_sub = it.subscribe(camera_topic, 10, alpha_image_cb);
     }else{
+        std::cout << "info sub: " << camera_info_topic << std::endl;
     	camerea_info_sub = nh.subscribe(camera_info_topic, 10, mask_cb);
     }
 
